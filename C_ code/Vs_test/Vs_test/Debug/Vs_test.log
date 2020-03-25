@@ -1,0 +1,14 @@
+﻿  pch.cpp
+  dllmain.cpp
+  MathLibrary.cpp
+C:\Users\paulk\OneDrive - University of Toronto\engsci 1t9\year 4 fall\ESC499\code\C_ code\Vs_test\Vs_test\MathLibrary.cpp(18,1): warning C4273: 'fibonacci_init': inconsistent dll linkage
+C:\Users\paulk\OneDrive - University of Toronto\engsci 1t9\year 4 fall\ESC499\code\C_ code\Vs_test\Vs_test\MathLibrary.h(10,33): message : see previous definition of 'fibonacci_init'
+C:\Users\paulk\OneDrive - University of Toronto\engsci 1t9\year 4 fall\ESC499\code\C_ code\Vs_test\Vs_test\MathLibrary.cpp(27,1): warning C4273: 'fibonacci_next': inconsistent dll linkage
+C:\Users\paulk\OneDrive - University of Toronto\engsci 1t9\year 4 fall\ESC499\code\C_ code\Vs_test\Vs_test\MathLibrary.h(16,33): message : see previous definition of 'fibonacci_next'
+C:\Users\paulk\OneDrive - University of Toronto\engsci 1t9\year 4 fall\ESC499\code\C_ code\Vs_test\Vs_test\MathLibrary.cpp(48,1): warning C4273: 'fibonacci_current': inconsistent dll linkage
+C:\Users\paulk\OneDrive - University of Toronto\engsci 1t9\year 4 fall\ESC499\code\C_ code\Vs_test\Vs_test\MathLibrary.h(19,47): message : see previous definition of 'fibonacci_current'
+C:\Users\paulk\OneDrive - University of Toronto\engsci 1t9\year 4 fall\ESC499\code\C_ code\Vs_test\Vs_test\MathLibrary.cpp(54,1): warning C4273: 'fibonacci_index': inconsistent dll linkage
+C:\Users\paulk\OneDrive - University of Toronto\engsci 1t9\year 4 fall\ESC499\code\C_ code\Vs_test\Vs_test\MathLibrary.h(22,37): message : see previous definition of 'fibonacci_index'
+  Generating Code...
+     Creating library C:\Users\paulk\OneDrive - University of Toronto\engsci 1t9\year 4 fall\ESC499\code\C_ code\Vs_test\Debug\MathLibrary.lib and object C:\Users\paulk\OneDrive - University of Toronto\engsci 1t9\year 4 fall\ESC499\code\C_ code\Vs_test\Debug\MathLibrary.exp
+  Vs_test.vcxproj -> C:\Users\paulk\OneDrive - University of Toronto\engsci 1t9\year 4 fall\ESC499\code\C_ code\Vs_test\Debug\MathLibrary.dll
