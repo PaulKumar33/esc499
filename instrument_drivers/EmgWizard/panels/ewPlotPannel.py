@@ -213,7 +213,7 @@ class SettingsFrame(wx.Frame):
 
 class ewPlotPanel(wx.Panel):
     def __init__(self, parent, emg_wiz_data={}):
-        wx.Panel.__init__(self, parent, id=wx.ID_ANY, pos=wx.DefaultPosition, size=wx.Size(1000, 600),
+        wx.Panel.__init__(self, parent, id=wx.ID_ANY, pos=wx.DefaultPosition, size=wx.Size(1100, 600),
                           style=wx.TAB_TRAVERSAL)
 
         #emg wizard globals
@@ -258,106 +258,104 @@ class ewPlotPanel(wx.Panel):
 
         bsTopHorizontal = wx.BoxSizer(wx.HORIZONTAL)
 
-        bsTopLeft = wx.BoxSizer(wx.VERTICAL)
+        bs_Left = wx.BoxSizer(wx.VERTICAL)
 
-        bSizer12 = wx.BoxSizer(wx.HORIZONTAL)
+        bs_btns = wx.BoxSizer(wx.HORIZONTAL)
 
         self.bBeginRecording = wx.Button(self, wx.ID_ANY, u"Begin Recording", wx.DefaultPosition, wx.DefaultSize, 0)
-        bSizer12.Add(self.bBeginRecording, 0, wx.ALL, 5)
+        bs_btns.Add(self.bBeginRecording, 0, wx.ALL, 5)
 
-        self.bSaveRecording = wx.Button(self, wx.ID_ANY, u"Save Recording", wx.DefaultPosition, wx.DefaultSize, 0)
-        bSizer12.Add(self.bSaveRecording, 0, wx.ALL, 5)
+        self.btn_show_stats = wx.Button(self, wx.ID_ANY, u"Compute Recorded Sats", wx.DefaultPosition, wx.DefaultSize,
+                                        0)
+        bs_btns.Add(self.btn_show_stats, 0, wx.ALL, 5)
 
         self.btn_settings = wx.Button(self, wx.ID_ANY, u"Settings", wx.DefaultPosition, wx.DefaultSize, 0)
-        bSizer12.Add(self.btn_settings, 0, wx.ALL, 5)
+        bs_btns.Add(self.btn_settings, 0, wx.ALL, 5)
 
-        self.btn_load_data = wx.Button(self, wx.ID_ANY, u"Load Existing Data", wx.DefaultPosition, wx.DefaultSize, 0)
-        bSizer12.Add(self.btn_load_data, 0, wx.ALL, 5)
+        self.btn_load_data = wx.Button(self, wx.ID_ANY, u"Open Recording", wx.DefaultPosition, wx.DefaultSize, 0)
+        bs_btns.Add(self.btn_load_data, 0, wx.ALL, 5)
 
-        self.btn_show_stats = wx.Button(self, wx.ID_ANY, u"Compute Statistics", wx.DefaultPosition)
-        bSizer12.Add(self.btn_show_stats, 0, wx.ALL, 5)
+        self.btn_plot_exisitng = wx.Button(self, wx.ID_ANY, u"Plot Existing Data", wx.DefaultPosition, wx.DefaultSize,
+                                           0)
+        bs_btns.Add(self.btn_plot_exisitng, 0, wx.ALL, 5)
 
-        self.btn_plot_existing = wx.Button(self, wx.ID_ANY, u"Plot Loaded Data")
-        bSizer12.Add(self.btn_plot_existing, 0, wx.ALL, 5)
+        bs_Left.Add(bs_btns, 1, wx.EXPAND, 5)
 
-        bsTopLeft.Add(bSizer12, 1, wx.EXPAND, 5)
-
-        bs_plot_hold = wx.BoxSizer(wx.VERTICAL)
+        bs_figure = wx.BoxSizer(wx.VERTICAL)
         #place code here for in panel plot
         self.panel_figure = plt.Figure()
         self.axes = self.panel_figure.add_subplot(111)
         self.panel_canvas = FigureCanvas(self, -1, self.panel_figure)
 
         #add the figure to the sizer
-        bs_plot_hold.Add(self.panel_canvas, 1, wx.LEFT|wx.TOP|wx.GROW)
+        bs_figure.Add(self.panel_canvas, 1, wx.LEFT|wx.TOP|wx.GROW)
         self.axes.set_xlabel("Time [s]")
         self.axes.set_ylabel("Voltage [mV]")
         self.axes.set_title("Recorded Data")
 
-        bsTopLeft.Add(bs_plot_hold, 1, wx.EXPAND, 5)
+        bs_Left.Add(bs_figure, 1, wx.EXPAND, 5)
 
-        bsTopHorizontal.Add(bsTopLeft, 1, wx.EXPAND, 5)
+        bsTopHorizontal.Add(bs_Left, 1, wx.EXPAND, 5)
 
         bSizer13 = wx.BoxSizer(wx.VERTICAL)
-        bSizer14 = wx.BoxSizer(wx.VERTICAL)
-        bSizer13.Add(bSizer14, 1, wx.EXPAND, 5)
+
+        bs_statistics = wx.BoxSizer(wx.VERTICAL)
+
+        sb_statistics = wx.StaticBoxSizer(wx.StaticBox(self, wx.ID_ANY, u"Signal Characteristics"), wx.VERTICAL)
+
+        self.st_zero_cross = wx.StaticText(sb_statistics.GetStaticBox(), wx.ID_ANY, u"Zero Crossings:",
+                                           wx.DefaultPosition, wx.DefaultSize, 0)
+        self.st_zero_cross.Wrap(-1)
+        sb_statistics.Add(self.st_zero_cross, 0, wx.ALL, 5)
+
+        self.st_mean_abs = wx.StaticText(sb_statistics.GetStaticBox(), wx.ID_ANY, u"Meab Abosulte Value:",
+                                         wx.DefaultPosition, wx.DefaultSize, 0)
+        self.st_mean_abs.Wrap(-1)
+        sb_statistics.Add(self.st_mean_abs, 0, wx.ALL, 5)
+
+        self.st_slope_sign = wx.StaticText(sb_statistics.GetStaticBox(), wx.ID_ANY, u"Slope Sign Change:",
+                                           wx.DefaultPosition, wx.DefaultSize, 0)
+        self.st_slope_sign.Wrap(-1)
+        sb_statistics.Add(self.st_slope_sign, 0, wx.ALL, 5)
+
+        self.st_wavelen = wx.StaticText(sb_statistics.GetStaticBox(), wx.ID_ANY, u"Wavelength:", wx.DefaultPosition,
+                                        wx.DefaultSize, 0)
+        self.st_wavelen.Wrap(-1)
+        sb_statistics.Add(self.st_wavelen, 0, wx.ALL, 5)
+
+        self.st_wilson = wx.StaticText(sb_statistics.GetStaticBox(), wx.ID_ANY, u"Wilson's Amplitude:",
+                                       wx.DefaultPosition, wx.DefaultSize, 0)
+        self.st_wilson.Wrap(-1)
+        sb_statistics.Add(self.st_wilson, 0, wx.ALL, 5)
+
+        self.st_vord = wx.StaticText(sb_statistics.GetStaticBox(), wx.ID_ANY, u"V Order:", wx.DefaultPosition,
+                                     wx.DefaultSize, 0)
+        self.st_vord.Wrap(-1)
+        sb_statistics.Add(self.st_vord, 0, wx.ALL, 5)
+
+        self.st_log_detect = wx.StaticText(sb_statistics.GetStaticBox(), wx.ID_ANY, u"Log Detect", wx.DefaultPosition,
+                                           wx.DefaultSize, 0)
+        self.st_log_detect.Wrap(-1)
+        sb_statistics.Add(self.st_log_detect, 0, wx.ALL, 5)
+
+        self.btn_save_stats = wx.Button(sb_statistics.GetStaticBox(), wx.ID_ANY, u"Save Statistics", wx.DefaultPosition,
+                                        wx.DefaultSize, 0)
+        sb_statistics.Add(self.btn_save_stats, 0, wx.ALL, 5)
+
+        bs_statistics.Add(sb_statistics, 1, wx.EXPAND, 5)
+
+        bSizer13.Add(bs_statistics, 1, wx.EXPAND, 5)
 
         bSizer16 = wx.BoxSizer(wx.HORIZONTAL)
+
         self.stPort = wx.StaticText(self, wx.ID_ANY, u"Recording Port", wx.DefaultPosition, wx.DefaultSize, 0)
         self.stPort.Wrap(-1)
         bSizer16.Add(self.stPort, 0, wx.ALL, 5)
 
-        ################################################################################################################
-        bSizer_stats = wx.BoxSizer(wx.VERTICAL)
-
-        self.st_statistics = wx.StaticText(self, wx.ID_ANY, u"Computed Results", wx.DefaultPosition, wx.DefaultSize, 0)
-        self.st_statistics.Wrap(-1)
-        bSizer_stats.Add(self.st_statistics, 0, wx.ALL, 5)
-
-        self.m_staticline4 = wx.StaticLine(self, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, wx.LI_HORIZONTAL)
-        bSizer_stats.Add(self.m_staticline4, 0, wx.EXPAND | wx.ALL, 5)
-
-        sbSizer1 = wx.StaticBoxSizer(wx.StaticBox(self, wx.ID_ANY, u"Time Domain Analysis"), wx.HORIZONTAL)
-
-        bSizer21 = wx.BoxSizer(wx.VERTICAL)
-
-        self.st_zero_cross = wx.StaticText(sbSizer1.GetStaticBox(), wx.ID_ANY, u"Signal Zero Crossings",
-                                           wx.DefaultPosition, wx.DefaultSize, 0)
-        self.st_zero_cross.Wrap(-1)
-        bSizer21.Add(self.st_zero_cross, 0, wx.ALL, 5)
-
-        self.st_mean_abs = wx.StaticText(sbSizer1.GetStaticBox(), wx.ID_ANY, u"Signal Mean Absolute Value",
-                                         wx.DefaultPosition, wx.DefaultSize, 0)
-        self.st_mean_abs.Wrap(-1)
-        bSizer21.Add(self.st_mean_abs, 0, wx.ALL, 5)
-
-        self.st_slope_sign = wx.StaticText(sbSizer1.GetStaticBox(), wx.ID_ANY, u"Signal Slope Sign Changes",
-                                           wx.DefaultPosition, wx.DefaultSize, 0)
-        self.st_slope_sign.Wrap(-1)
-        bSizer21.Add(self.st_slope_sign, 0, wx.ALL, 5)
-
-        self.st_wavelen = wx.StaticText(sbSizer1.GetStaticBox(), wx.ID_ANY, u"Signal Wave Length", wx.DefaultPosition,
-                                        wx.DefaultSize, 0)
-        self.st_wavelen.Wrap(-1)
-        bSizer21.Add(self.st_wavelen, 0, wx.ALL, 5)
-
-        self.st_wilson = wx.StaticText(sbSizer1.GetStaticBox(), wx.ID_ANY, u"Signal Wilson's Amplitude",
-                                       wx.DefaultPosition, wx.DefaultSize, 0)
-        self.st_wilson.Wrap(-1)
-        bSizer21.Add(self.st_wilson, 0, wx.ALL, 5)
-
-        self.st_vord = wx.StaticText(sbSizer1.GetStaticBox(), wx.ID_ANY, u"Signal V-Order", wx.DefaultPosition,
-                                     wx.DefaultSize, 0)
-        self.st_vord.Wrap(-1)
-        bSizer21.Add(self.st_vord, 0, wx.ALL, 5)
-
-        self.btn_display_stats = wx.Button(sbSizer1.GetStaticBox(), wx.ID_ANY, u"Plot Loaded Data Stats", wx.DefaultPosition, wx.DefaultSize, 0)
-        bSizer21.Add(self.btn_display_stats, 0 , wx.ALL, 5)
-
-        sbSizer1.Add(bSizer21, 1, wx.EXPAND, 5)
-        bSizer_stats.Add(bSizer21)
-        bSizer13.Add(bSizer_stats, 1, wx.EXPAND, 5)
-        ################################################################################################################'''
+        PortSelectionChoices = [u"Port", wx.EmptyString]
+        self.PortSelection = wx.Choice(self, wx.ID_ANY, wx.DefaultPosition, wx.Size(200, -1), PortSelectionChoices, 0)
+        self.PortSelection.SetSelection(0)
+        bSizer16.Add(self.PortSelection, 0, wx.ALL, 5)
 
         self._init_drivers()
 
@@ -368,10 +366,10 @@ class ewPlotPanel(wx.Panel):
         for element in pyaudio_driver_.useable_dev_list:
             self.PortSelectionChoices.append("{0} - {1}".format(element['index'], element['name']))
         #PortSelectionChoices = PortSelectionChoices.sort()
-        self.PortSelection = wx.Choice(sbSizer1.GetStaticBox(), wx.ID_ANY, wx.DefaultPosition, wx.Size(200, -1), self.PortSelectionChoices, 0)
-        self.PortSelection.SetSelection(0)
+        #self.PortSelection = wx.Choice(sbSizer1.GetStaticBox(), wx.ID_ANY, wx.DefaultPosition, wx.Size(200, -1), self.PortSelectionChoices, 0)
+        #self.PortSelection.SetSelection(0)
 
-        bSizer16.Add(self.PortSelection, 0, wx.ALL, 5)
+        #bSizer16.Add(self.PortSelection, 0, wx.ALL, 5)
 
         bSizer13.Add(bSizer16, 1, wx.EXPAND, 5)
 
@@ -441,10 +439,10 @@ class ewPlotPanel(wx.Panel):
         # Connect Events
         self.bBeginRecording.Bind(wx.EVT_BUTTON, self.onBeginRecording)
         self.btn_settings.Bind(wx.EVT_BUTTON, self.OnSettings)
-        self.PortSelection.Bind(wx.EVT_CHOICE, self.OnPortSelection)
-        self.btn_show_stats.Bind(wx.EVT_BUTTON, self.OnUpdateValue)
+        #self.PortSelection.Bind(wx.EVT_CHOICE, self.OnPortSelection)
+        #self.btn_show_stats.Bind(wx.EVT_BUTTON, self.OnUpdateValue)
         self.btn_load_data.Bind(wx.EVT_BUTTON, self.OnLoadExisting)
-        self.btn_plot_existing.Bind(wx.EVT_BUTTON, self.OnPlotExisting)
+        #self.btn_plot_existing.Bind(wx.EVT_BUTTON, self.OnPlotExisting)
         pass
 
     def __del__(self):
