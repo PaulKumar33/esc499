@@ -222,16 +222,24 @@ class EMG_TimeDomain_Processing:
         self.stats_module.histogram(plot=False)
         statistics = self.stats_module.hist_data_
 
+        print("we get the hist")
+        print(statistics)
+
         prob_array = statistics['probability_distribution']
+        bins_array = statistics['bins']
 
         expecation_hold = []
         for el in dataframe:
-            expecation_hold.append(el*self.stats_module.retrieve_probability(el, prob_array))
+            expecation_hold.append(el*self.stats_module.retrieve_probability(el, bins_array, prob_array))
+
+        print("after loop")
 
         #determine the expectation value
         expectation = np.sum(expecation_hold)
         raised_expectation = np.power(expectation, 2.0)
         self.waveform_vorder_ = np.power(raised_expectation, 1./v_order)
+
+        print("its an error during the expectation calc")
 
     def log_detector(self, datafram):
         pass
@@ -296,6 +304,8 @@ class Statistical_Methods:
         std = self.std_
 
         count, bins, ignored = plt.hist(self.dataset, 30)
+        bins = bins[:-1]
+
         probability = [count[i]/len(self.dataset) for i in range(len(count))]
 
         #histogram data
@@ -311,17 +321,26 @@ class Statistical_Methods:
 
         return count, bins, ignored
 
-    def retrieve_probability(self, voltage, probability_array):
+    def retrieve_probability(self, voltage, bins, probability_array):
         '''
         this method retrieves the direct probability for a given voltage value occuring in measurement
 
         this method takes the recorded signal and the probability array associated with the signal. the probability
         needs to be calculated before this method is called
         '''
-        res = next(x for x, val in enumerate(probability_array) if val > voltage)
+        print('in retrieve')
+        #res = []
+        res = [x for x, val in enumerate(bins) if val > voltage]
+        print(res)
+        if(res == []):
+            #case for when max volt
+            res = [len(bins)-1]
+        print(probability_array[res[0]])
+        res = probability_array[res[0]]
+        print("after res")
         #have the index where its included in the bin
 
-        return probability_array[res]
+        return res
 
     def signal_cdf(self, params = {}):
         '''this method develops the signals CDF function
