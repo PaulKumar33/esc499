@@ -275,9 +275,9 @@ class ewPlotPanel(wx.Panel):
         self.btn_load_data = wx.Button(self, wx.ID_ANY, u"Open Recording", wx.DefaultPosition, wx.DefaultSize, 0)
         bs_btns.Add(self.btn_load_data, 0, wx.ALL, 5)
 
-        self.btn_plot_exisitng = wx.Button(self, wx.ID_ANY, u"Plot Existing Data", wx.DefaultPosition, wx.DefaultSize,
+        self.btn_plot_existng = wx.Button(self, wx.ID_ANY, u"Plot Existing Data", wx.DefaultPosition, wx.DefaultSize,
                                            0)
-        bs_btns.Add(self.btn_plot_exisitng, 0, wx.ALL, 5)
+        bs_btns.Add(self.btn_plot_existng, 0, wx.ALL, 5)
 
         bs_Left.Add(bs_btns, 1, wx.EXPAND, 5)
 
@@ -352,24 +352,26 @@ class ewPlotPanel(wx.Panel):
         self.stPort.Wrap(-1)
         bSizer16.Add(self.stPort, 0, wx.ALL, 5)
 
-        PortSelectionChoices = [u"Port", wx.EmptyString]
+        '''PortSelectionChoices = [u"Port", wx.EmptyString]
         self.PortSelection = wx.Choice(self, wx.ID_ANY, wx.DefaultPosition, wx.Size(200, -1), PortSelectionChoices, 0)
         self.PortSelection.SetSelection(0)
-        bSizer16.Add(self.PortSelection, 0, wx.ALL, 5)
+        bSizer16.Add(self.PortSelection, 0, wx.ALL, 5)'''
 
         self._init_drivers()
 
         pyaudio_driver_ = pyaudio_driver.pyaudio_driver(None, None, None)
         self.PortSelectionChoices= []
         pyaudio_driver_.displayPortInfo(display = True)
-        print(pyaudio_driver_.useable_dev_list)
+        #print(pyaudio_driver_.useable_dev_list)
         for element in pyaudio_driver_.useable_dev_list:
+            #print("#####################################") - for debugging
+            #print("{0} - {1}".format(element['index'], element['name']))
             self.PortSelectionChoices.append("{0} - {1}".format(element['index'], element['name']))
-        #PortSelectionChoices = PortSelectionChoices.sort()
-        #self.PortSelection = wx.Choice(sbSizer1.GetStaticBox(), wx.ID_ANY, wx.DefaultPosition, wx.Size(200, -1), self.PortSelectionChoices, 0)
-        #self.PortSelection.SetSelection(0)
-
-        #bSizer16.Add(self.PortSelection, 0, wx.ALL, 5)
+        #self.PortSelectionChoices = self.PortSelectionChoices.sort()
+        #print("here are the port choices: \n {}".format(self.PortSelectionChoices))
+        self.PortSelection = wx.Choice(self, wx.ID_ANY, wx.DefaultPosition, wx.Size(200, -1), self.PortSelectionChoices, 0)
+        self.PortSelection.SetSelection(0)
+        bSizer16.Add(self.PortSelection, 0, wx.ALL, 5)
 
         bSizer13.Add(bSizer16, 1, wx.EXPAND, 5)
 
@@ -439,10 +441,10 @@ class ewPlotPanel(wx.Panel):
         # Connect Events
         self.bBeginRecording.Bind(wx.EVT_BUTTON, self.onBeginRecording)
         self.btn_settings.Bind(wx.EVT_BUTTON, self.OnSettings)
-        #self.PortSelection.Bind(wx.EVT_CHOICE, self.OnPortSelection)
-        #self.btn_show_stats.Bind(wx.EVT_BUTTON, self.OnUpdateValue)
+        self.PortSelection.Bind(wx.EVT_CHOICE, self.OnPortSelection)
+        self.btn_show_stats.Bind(wx.EVT_BUTTON, self.OnUpdateValue)
         self.btn_load_data.Bind(wx.EVT_BUTTON, self.OnLoadExisting)
-        #self.btn_plot_existing.Bind(wx.EVT_BUTTON, self.OnPlotExisting)
+        self.btn_plot_existng.Bind(wx.EVT_BUTTON, self.OnPlotExisting)
         pass
 
     def __del__(self):
@@ -671,8 +673,11 @@ class ewPlotPanel(wx.Panel):
         try:
             input_dict = {"data_in":dataframe,
                           'emg_wiz_data': self.emg_data}
+            print("cock")
             self.emg_proc.UpdateDataInput(input_dict['data_in'], sample_rate)
+            print("piss")
             RET_DICT = self.emg_proc.RunAnalysis()
+            print("cheese")
             for key in RET_DICT:
                 self.analysis_array[key] = RET_DICT[key]
 

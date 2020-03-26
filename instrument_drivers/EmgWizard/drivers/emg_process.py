@@ -91,11 +91,17 @@ class EMG_TimeDomain_Processing:
         '''this method returns a dictionary of the analysis results'''
         if(dataframe == None):
             dataframe = self.emg_data['data']
+        print("mean")
         self.mean_absolute_value(dataframe)
+        print("zc")
         self.zero_crossings(dataframe)
+        print("slope")
         self.slope_sign_change(dataframe)
+        print("wavelength")
         self.waveform_length(dataframe)
+        print("wils am")
         self.willson_amplitude(dataframe)
+        print("v order")
         self.v_order(dataframe, v_order=2)
 
 
@@ -268,7 +274,7 @@ class Statistical_Methods:
         self.std_ = np.std(self.dataset)
 
     def variance(self, time_window = None):
-        print(">>> Runnning variane")
+        print(">>> Runnning variance")
         if(time_window == None):
             self.variance_ = np.var(self.dataset)
         else:
@@ -370,7 +376,7 @@ class Statistical_Methods:
 
             if(function_params['50_volt']):
                 '''returns the 50% voltage value. should calculate the cdf for this'''
-                print('getting 50% voltage value')
+                print('>>> getting 50% voltage value')
 
                 #want to interpolate this value
                 interp = 0.5
@@ -400,6 +406,7 @@ class Statistical_Methods:
             print(exc_type, fname, exc_tb.tb_lineno)
 
         finally:
+            print(">>> debug 1 we get here")
             return raw_probability, cdf_probability, volt_50
 
 if __name__ == "__main__":

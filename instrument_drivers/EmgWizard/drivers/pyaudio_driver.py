@@ -166,7 +166,7 @@ class pyaudio_driver:
             self.stream.close()
 
             #this was originally here
-            #plt.close()
+            plt.close()
 
     def update_plot(self, frame):
         """This is called by matplotlib for each plot update.
