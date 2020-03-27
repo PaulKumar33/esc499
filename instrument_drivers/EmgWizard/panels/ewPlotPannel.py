@@ -180,14 +180,14 @@ class SettingsFrame(wx.Frame):
     def SaveParameters(self):
 
         index = self.cb_samplingRate.GetCurrentSelection()
-        chunk_index = self.cb_chunkSize.GetStringSelection()
+        chunk_index = self.cb_chunkSize.GetCurrentSelection()
         if(index == -1):
             #default to zero if unchanged
             index = 0
         if(chunk_index == -1):
             chunk_index = 0
 
-        chunk = int(self.cb_chunkSize.GetString(index))
+        chunk = int(self.cb_chunkSize.GetString(chunk_index))
 
         samprate = int(self.cb_samplingRate.GetString(index).split(" ")[0])
         rec_time = str(self.m_textCtrl1.GetValue())
@@ -195,7 +195,7 @@ class SettingsFrame(wx.Frame):
         self.settings_dict['time'] = rec_time
         self.settings_dict['samplerate'] = samprate
         self.settings_dict['chunksize'] = chunk
-        print(">>> update settings: time: {0}\n samplerate: {1}\n chunk: {2}".format(rec_time, samprate, chunk))
+        print(">>> update settings:\n time: {0}\n samplerate: {1}\n chunk: {2}".format(rec_time, samprate, chunk))
         self.parent.UpdateSettings(self.settings_dict)
 
     def OnOkay(self, event):
@@ -205,6 +205,7 @@ class SettingsFrame(wx.Frame):
         event.Skip()
 
     def OnCancel(self, event):
+        self.Close()
         event.Skip()
 
     def OnClose(self, event):
@@ -514,6 +515,7 @@ class ewPlotPanel(wx.Panel):
         rate = self.samplerate
         chunk = self.chunksize
         t = self.recordtime
+        print(">>> debug official record time: {}".format(t))
         self.pyplot = pyaudio_driver.pyaudio_driver(rate,chunk,t)
         self.pyplot._init_module()
         self.pyplot.PortSelection(1)
@@ -662,8 +664,10 @@ class ewPlotPanel(wx.Panel):
         pass
 
     def UpdateSettings(self, setting_dict):
+        print(">>> updating settings")
         self.settings['time'] = setting_dict['time']
         self.settings['samplerate'] = setting_dict['samplerate']
+        self.settings['chunksize'] = setting_dict['chunksize']
 
         print(">>> settings updated")
 
@@ -673,11 +677,8 @@ class ewPlotPanel(wx.Panel):
         try:
             input_dict = {"data_in":dataframe,
                           'emg_wiz_data': self.emg_data}
-            print("cock")
             self.emg_proc.UpdateDataInput(input_dict['data_in'], sample_rate)
-            print("piss")
             RET_DICT = self.emg_proc.RunAnalysis()
-            print("cheese")
             for key in RET_DICT:
                 self.analysis_array[key] = RET_DICT[key]
 
@@ -719,7 +720,7 @@ class ewPlotPanel(wx.Panel):
                 self.loaded_data = final_array
                 self.emg_data['loaded_data'] = final_array
             except IOError:
-                prnit(">>> an error occurred")
+                print(">>> an error occurred")
 
     def NameInput(self):
         try:
@@ -770,10 +771,7 @@ class ewPlotPanel(wx.Panel):
                 return -1
 
             self.samplerate = self.settings['samplerate']
-            print(">>>samp rate: {}".format(self.settings['sample']))
-
             self.chunksize = self.settings['chunksize']
-
             time = self.settings['time']
             self.recordtime = int(time)
 

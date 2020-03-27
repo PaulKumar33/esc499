@@ -98,7 +98,7 @@
                             <property name="proportion">1</property>
                             <object class="wxBoxSizer" expanded="1">
                                 <property name="minimum_size"></property>
-                                <property name="name">bs_buttons</property>
+                                <property name="name">bs_Left</property>
                                 <property name="orient">wxHORIZONTAL</property>
                                 <property name="permission">none</property>
                                 <object class="sizeritem" expanded="1">
@@ -107,7 +107,7 @@
                                     <property name="proportion">1</property>
                                     <object class="wxBoxSizer" expanded="1">
                                         <property name="minimum_size"></property>
-                                        <property name="name">bSizer14</property>
+                                        <property name="name">bs_btns</property>
                                         <property name="orient">wxHORIZONTAL</property>
                                         <property name="permission">none</property>
                                         <object class="sizeritem" expanded="1">
@@ -550,6 +550,17 @@
                                                 <event name="OnUpdateUI"></event>
                                             </object>
                                         </object>
+                                    </object>
+                                </object>
+                                <object class="sizeritem" expanded="1">
+                                    <property name="border">5</property>
+                                    <property name="flag">wxEXPAND</property>
+                                    <property name="proportion">1</property>
+                                    <object class="wxBoxSizer" expanded="1">
+                                        <property name="minimum_size"></property>
+                                        <property name="name">bs_figure</property>
+                                        <property name="orient">wxVERTICAL</property>
+                                        <property name="permission">none</property>
                                     </object>
                                 </object>
                             </object>
@@ -1437,59 +1448,8 @@
                                                 <event name="OnUpdateUI"></event>
                                             </object>
                                         </object>
-                                        <object class="sizeritem" expanded="0">
-                                            <property name="border">5</property>
-                                            <property name="flag">wxEXPAND</property>
-                                            <property name="proportion">1</property>
-                                            <object class="spacer" expanded="0">
-                                                <property name="height">0</property>
-                                                <property name="permission">protected</property>
-                                                <property name="width">0</property>
-                                            </object>
-                                        </object>
-                                        <object class="sizeritem" expanded="0">
-                                            <property name="border">5</property>
-                                            <property name="flag">wxEXPAND</property>
-                                            <property name="proportion">1</property>
-                                            <object class="spacer" expanded="0">
-                                                <property name="height">0</property>
-                                                <property name="permission">protected</property>
-                                                <property name="width">0</property>
-                                            </object>
-                                        </object>
-                                        <object class="sizeritem" expanded="0">
-                                            <property name="border">5</property>
-                                            <property name="flag">wxEXPAND</property>
-                                            <property name="proportion">1</property>
-                                            <object class="spacer" expanded="0">
-                                                <property name="height">0</property>
-                                                <property name="permission">protected</property>
-                                                <property name="width">0</property>
-                                            </object>
-                                        </object>
-                                        <object class="sizeritem" expanded="0">
-                                            <property name="border">5</property>
-                                            <property name="flag">wxEXPAND</property>
-                                            <property name="proportion">1</property>
-                                            <object class="spacer" expanded="0">
-                                                <property name="height">0</property>
-                                                <property name="permission">protected</property>
-                                                <property name="width">0</property>
-                                            </object>
-                                        </object>
                                     </object>
                                 </object>
-                            </object>
-                        </object>
-                        <object class="sizeritem" expanded="1">
-                            <property name="border">5</property>
-                            <property name="flag">wxEXPAND</property>
-                            <property name="proportion">1</property>
-                            <object class="wxBoxSizer" expanded="1">
-                                <property name="minimum_size"></property>
-                                <property name="name">bSizer131</property>
-                                <property name="orient">wxVERTICAL</property>
-                                <property name="permission">none</property>
                             </object>
                         </object>
                     </object>

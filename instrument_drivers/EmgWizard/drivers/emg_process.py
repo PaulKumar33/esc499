@@ -40,30 +40,32 @@ class EMG_TimeDomain_Processing:
         #for regular list data pass in as list type
         if('data_in' in kwargs):
             data_in = kwargs['data_in']
+            self.stats_module = Statistical_Methods(data_in)
         if(isinstance(data_in, list)):
             if(data_in == []):
                 print(">>> passed in data array is empty")
                 print(">>> init emg process without input data")
                 self.stats_module = Statistical_Methods([])
             else:
-                sample_rate = kwargs['sample_rate']
-                time = np.linspace(0, float(len(data_in))/sample_rate, len(data_in))
-                self.emg_data = {
-                    'time': time,
-                    'data':data_in
-                }
+                if (data_in.endswith("csv")):
+                    '''csv is timexdata'''
+                    obj = csv_process.CSVPreprosses(data_in)
+                    obj.OpenCsv()
+                    return_dict = obj.SendCSVtoList()
+
+                    time = return_dict['time']
+                    data = return_dict['data']
+
+                    self.emg_data = {'time': time, 'data': data}
+                else:
+                    sample_rate = kwargs['sample_rate']
+                    time = np.linspace(0, float(len(data_in))/sample_rate, len(data_in))
+                    self.emg_data = {
+                        'time': time,
+                        'data':data_in
+                    }
                 self.stats_module = Statistical_Methods(self.emg_data['data'])
 
-        elif(data_in.endswith("csv")):
-            '''csv is timexdata'''
-            obj = csv_process.CSVPreprosses(data_in)
-            obj.OpenCsv()
-            return_dict = obj.SendCSVtoList()
-
-            time = return_dict['time']
-            data = return_dict['data']
-
-            self.emg_data = {'time': time, 'data': data}
 
     def __init_class_attributes(self):
         self.mean_absolute_value_ = None
@@ -91,19 +93,12 @@ class EMG_TimeDomain_Processing:
         '''this method returns a dictionary of the analysis results'''
         if(dataframe == None):
             dataframe = self.emg_data['data']
-        print("mean")
         self.mean_absolute_value(dataframe)
-        print("zc")
         self.zero_crossings(dataframe)
-        print("slope")
         self.slope_sign_change(dataframe)
-        print("wavelength")
         self.waveform_length(dataframe)
-        print("wils am")
         self.willson_amplitude(dataframe)
-        print("v order")
         self.v_order(dataframe, v_order=2)
-
 
         '''do these next'''
         #self.log_detector(dataframe)
@@ -222,9 +217,6 @@ class EMG_TimeDomain_Processing:
         self.stats_module.histogram(plot=False)
         statistics = self.stats_module.hist_data_
 
-        print("we get the hist")
-        print(statistics)
-
         prob_array = statistics['probability_distribution']
         bins_array = statistics['bins']
 
@@ -232,14 +224,11 @@ class EMG_TimeDomain_Processing:
         for el in dataframe:
             expecation_hold.append(el*self.stats_module.retrieve_probability(el, bins_array, prob_array))
 
-        print("after loop")
-
         #determine the expectation value
         expectation = np.sum(expecation_hold)
         raised_expectation = np.power(expectation, 2.0)
         self.waveform_vorder_ = np.power(raised_expectation, 1./v_order)
 
-        print("its an error during the expectation calc")
 
     def log_detector(self, datafram):
         pass
@@ -328,16 +317,12 @@ class Statistical_Methods:
         this method takes the recorded signal and the probability array associated with the signal. the probability
         needs to be calculated before this method is called
         '''
-        print('in retrieve')
         #res = []
         res = [x for x, val in enumerate(bins) if val > voltage]
-        print(res)
         if(res == []):
             #case for when max volt
             res = [len(bins)-1]
-        print(probability_array[res[0]])
         res = probability_array[res[0]]
-        print("after res")
         #have the index where its included in the bin
 
         return res
@@ -359,7 +344,7 @@ class Statistical_Methods:
                 function_params[element] = params[element]
         try:
             if(self.hist_data_ == None):
-                print("running signal histogram")
+                print(">>> running signal histogram")
                 self.histogram(plot=False)
             prob = self.hist_data_['probability_distribution']
             bins = self.hist_data_['bins']
@@ -425,7 +410,6 @@ class Statistical_Methods:
             print(exc_type, fname, exc_tb.tb_lineno)
 
         finally:
-            print(">>> debug 1 we get here")
             return raw_probability, cdf_probability, volt_50
 
 if __name__ == "__main__":
