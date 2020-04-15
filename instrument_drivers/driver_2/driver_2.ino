@@ -10,7 +10,7 @@ void loop() {
   timeSync(loopTime);
   //int val = analogRead(0) - 512;
   double val = (analogRead(0) -512) / 512.0;
-  sendToPC(&val);
+  Serial.println(val);
 }
  
 void timeSync(unsigned long deltaT)

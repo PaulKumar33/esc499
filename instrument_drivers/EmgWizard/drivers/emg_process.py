@@ -47,17 +47,18 @@ class EMG_TimeDomain_Processing:
                 print(">>> init emg process without input data")
                 self.stats_module = Statistical_Methods([])
             else:
-                if (data_in.endswith("csv")):
-                    '''csv is timexdata'''
-                    obj = csv_process.CSVPreprosses(data_in)
-                    obj.OpenCsv()
-                    return_dict = obj.SendCSVtoList()
+                try:
+                    if(data_in.endswith("csv")):
+                        '''csv is timexdata'''
+                        obj = csv_process.CSVPreprosses(data_in)
+                        obj.OpenCsv()
+                        return_dict = obj.SendCSVtoList()
 
-                    time = return_dict['time']
-                    data = return_dict['data']
+                        time = return_dict['time']
+                        data = return_dict['data']
 
-                    self.emg_data = {'time': time, 'data': data}
-                else:
+                        self.emg_data = {'time': time, 'data': data}
+                except AttributeError:
                     sample_rate = kwargs['sample_rate']
                     time = np.linspace(0, float(len(data_in))/sample_rate, len(data_in))
                     self.emg_data = {
@@ -99,6 +100,7 @@ class EMG_TimeDomain_Processing:
         self.waveform_length(dataframe)
         self.willson_amplitude(dataframe)
         self.v_order(dataframe, v_order=2)
+        self.log_detector(dataframe)
 
         '''do these next'''
         #self.log_detector(dataframe)
@@ -110,7 +112,7 @@ class EMG_TimeDomain_Processing:
                                'wavelength': self.waveform_length_,
                                'willsamplitude': self.willson_amplitude_,
                                'v_order': self.waveform_vorder_,
-                               'log_detect': None,
+                               'log_detect': self.log_detector_,
                                'autoregression': None,
                                'emg_cdf': None
                                }
@@ -126,16 +128,16 @@ class EMG_TimeDomain_Processing:
     def mean_absolute_value(self, dataframe):
         '''this method gets the mean absolute value of the signal'''
         samples = len(dataframe)
-        self.mean_absolute_value_ = (1/samples)*np.sum(dataframe)
+        self.mean_absolute_value_ = (1/samples)*np.sum(np.abs(dataframe))
 
     def zero_crossings(self, dataframe):
-        epsilon = 0.015             #threshold value defined by the paper
+        epsilon = 0.015/4             #threshold value defined by the paper
         zero_crossings = 0
         for index in range(len(dataframe)):
             if(index == 0):
                 continue
-            if((dataframe[index] > 0 and dataframe[index-1]<0) or
-                    (dataframe[index] < 0 and dataframe[index-1] >0) and
+            if((dataframe[index] < 0 and dataframe[index-1]>0) or
+                    (dataframe[index] > 0 and dataframe[index-1] <0) and
             np.abs(dataframe[index-1] - dataframe[index]) >= epsilon):
                 zero_crossings += 1
         self.zero_crossings_ = zero_crossings
@@ -143,18 +145,18 @@ class EMG_TimeDomain_Processing:
     def slope_sign_change(self, dataframe):
         '''this method tracks the amount of slope sign changes'''
         slope_sign_changes = 0
-        epsilon = 0.012
+        epsilon = 0.015/4
         for index in range(len(dataframe)):
             if(index == 0):
                 continue
             elif(index == len(dataframe)-10):
                 break
-            cond1 = (dataframe[index] > dataframe[index-10] and
-                     dataframe[index+10] < dataframe[index])
-            cond2 = (dataframe[index] < dataframe[index-10] and
-                     dataframe[index+10] > dataframe[index])
-            cond3 = np.abs(dataframe[index] - dataframe[index+10]) >= epsilon
-            cond4 = np.abs(dataframe[index] - dataframe[index-10]) >= epsilon
+            cond1 = (dataframe[index] > dataframe[index-1] and
+                     dataframe[index+1] < dataframe[index])
+            cond2 = (dataframe[index] < dataframe[index-1] and
+                     dataframe[index+1] > dataframe[index])
+            cond3 = np.abs(dataframe[index] - dataframe[index+1]) >= epsilon
+            cond4 = np.abs(dataframe[index] - dataframe[index-1]) >= epsilon
 
             if((cond1 or cond2) and (cond3 or cond4)):
                 slope_sign_changes += 1
@@ -163,7 +165,7 @@ class EMG_TimeDomain_Processing:
     def waveform_length(self, dataframe):
         '''this method determines the length of the waveform in the
         analysis window'''
-        delta_xk = [dataframe[index] - dataframe[index - 1] for index
+        delta_xk = [np.abs(dataframe[index] - dataframe[index - 1]) for index
                     in range(1, len(dataframe))]
         self.waveform_length_ = np.sum(delta_xk)
 
@@ -177,6 +179,7 @@ class EMG_TimeDomain_Processing:
         '''
         '''this method calculates the value of the wilson amplitude'''
         wilson_amp = 0
+        print(">>> getting willison")
         if(cdf_val):
             volt_50 = self.stats_module.signal_cdf({"plot": False,
                                          "prob_return": False,
@@ -185,11 +188,13 @@ class EMG_TimeDomain_Processing:
             thresh = volt_50
         else:
             thresh = custom_volt
+        #print(thresh)
+        #thresh = 0.05
 
         #want to check how may times the amplitude exceeds the threshold.
         #self.willson_amplitude_ = volt_50
-        for element in dataframe:
-            if(float(element)>thresh):
+        for element in range(len(dataframe)-1):
+            if(float(dataframe[element]) - float(dataframe[element+1])>thresh):
                 wilson_amp+=1
             else:
                 continue
@@ -225,13 +230,20 @@ class EMG_TimeDomain_Processing:
             expecation_hold.append(el*self.stats_module.retrieve_probability(el, bins_array, prob_array))
 
         #determine the expectation value
-        expectation = np.sum(expecation_hold)
-        raised_expectation = np.power(expectation, 2.0)
-        self.waveform_vorder_ = np.power(raised_expectation, 1./v_order)
+        expectation = np.sum(np.power(np.abs(expecation_hold), v_order))
+        #raised_expectation = np.power(expectation, 2.0)
+        self.waveform_vorder_ = np.power(expectation, 1./v_order)
 
 
-    def log_detector(self, datafram):
-        pass
+    def log_detector(self, dataframe):
+
+        N = len(dataframe)
+        log_value_hold = [np.log(np.abs(dataframe[i])) for i in range(len(dataframe))]
+        print(log_value_hold)
+        log_sum = np.sum(log_value_hold)
+        print(log_sum)
+        print(np.exp(log_sum/N))
+        self.log_detector_ = np.exp(log_sum/N)
 
     def emg_hist(self):
         pass
@@ -304,7 +316,7 @@ class Statistical_Methods:
                            "probability_distribution": probability}
         if('plot' in kwargs.keys() and kwargs['plot'] == True):
             plt.title("Signal Distribution")
-            plt.xlabel("Bins")
+            plt.xlabel("Bins [mV]")
             plt.ylabel("Count")
             plt.show(kwargs['plot'])
 
@@ -413,23 +425,17 @@ class Statistical_Methods:
             return raw_probability, cdf_probability, volt_50
 
 if __name__ == "__main__":
-    data_dir = r"C:\Users\paulk\OneDrive - University of Toronto\engsci 1t9\year 4 fall\ESC499\Data"
 
-    file_in = "lpf_2_2000_1000.csv"
-    file_path = r"{0}\{1}".format(data_dir, file_in)
-    print(file_path)
-    time_domain = EMG_TimeDomain_Processing(test=True,
-                                            data_in=file_path,
-                                            sampling_rate=48000)
-    time_array = time_domain.emg_data['time']
-    data = time_domain.emg_data['data']
-
-    '''time_domain.zero_crossings(data)
-    time_domain.mean_absolute_value(data)
-    time_domain.slope_sign_change(data)
-    print(time_domain.zero_crossings_)
-    print(time_domain.mean_absolute_value_)
-    print(time_domain.slope_sign_change_)'''
+    import csv
+    file = r"C:\Users\paulk\OneDrive - University of Toronto\engsci 1t9\year 4 fall\ESC499\code\instrument_drivers\EmgWizard\saved_data\cdf_example.csv"
+    data = []
+    with open(file) as csv_file:
+        read = csv.reader(csv_file, delimiter=',')
+        for row in read:
+            print(row)
+            if("MeasuredPoint" in row or 'time' in row or '' in row):
+                continue
+            data.append(float(row[0]))
 
     # testing the methods with sim data
     stats_module = Statistical_Methods(dataset=data)

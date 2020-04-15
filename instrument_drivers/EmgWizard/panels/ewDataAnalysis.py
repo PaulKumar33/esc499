@@ -38,6 +38,9 @@ class ewDataAnalysis(wx.Panel):
         self.emg_process = emg_process.EMG_TimeDomain_Processing(data_in = None)
         self.original_data = [[],[], 0]
 
+        self.start_time = 0
+        self.end_time = 100
+
         bSizer16 = wx.BoxSizer(wx.VERTICAL)
 
         bSizer18 = wx.BoxSizer(wx.HORIZONTAL)
@@ -64,23 +67,22 @@ class ewDataAnalysis(wx.Panel):
         self.st_start.Wrap(-1)
         sb_tmie_window.Add(self.st_start, 0, wx.ALL, 5)
 
-        self.m_textCtrl2 = wx.TextCtrl(sb_tmie_window.GetStaticBox(), wx.ID_ANY, wx.EmptyString, wx.DefaultPosition,
-                                       wx.DefaultSize, 0)
-        self.m_textCtrl2.SetMaxSize(wx.Size(50, -1))
+        #self.m_textCtrl2 = wx.TextCtrl(sb_tmie_window.GetStaticBox(), wx.ID_ANY, wx.EmptyString, wx.DefaultPosition,
+        #                               wx.DefaultSize, 0)
+        #self.m_textCtrl2.SetMaxSize(wx.Size(50, -1))
 
-        sb_tmie_window.Add(self.m_textCtrl2, 0, wx.ALL, 5)
+        self.start_slide = wx.Slider(sb_tmie_window.GetStaticBox(), value=0, minValue = 0, maxValue=100, style=wx.SL_HORIZONTAL|wx.SL_LABELS)
+        self.end_slide = wx.Slider(sb_tmie_window.GetStaticBox(), value=100, minValue=0, maxValue=100,
+                                     style=wx.SL_HORIZONTAL | wx.SL_LABELS)
+
+        sb_tmie_window.Add(self.start_slide, 0, wx.ALL, 5)
 
         self.st_end = wx.StaticText(sb_tmie_window.GetStaticBox(), wx.ID_ANY, u"End", wx.DefaultPosition,
                                     wx.DefaultSize, 0)
         self.st_end.Wrap(-1)
-        sb_tmie_window.Add(self.st_end, 0, wx.ALL, 5)
+        sb_tmie_window.Add(self.end_slide, 0, wx.ALL, 5)
 
-        self.m_textCtrl3 = wx.TextCtrl(sb_tmie_window.GetStaticBox(), wx.ID_ANY, wx.EmptyString, wx.DefaultPosition,
-                                       wx.DefaultSize, 0)
-        self.m_textCtrl3.SetMaxSize(wx.Size(50, -1))
-
-        sb_tmie_window.Add(self.m_textCtrl3, 0, wx.ALL, 5)
-
+        
         bSizer20.Add(sb_tmie_window, 1, wx.ALL, 5)
 
         self.btn_plot_window = wx.Button(self, wx.ID_ANY, u"Plot Window", wx.DefaultPosition, wx.DefaultSize, 0)
@@ -93,7 +95,7 @@ class ewDataAnalysis(wx.Panel):
 
         #for the figure###################################################################
         bSizer9 = wx.BoxSizer(wx.VERTICAL)
-        self.panel_figure = plt.Figure(figsize=(1,1))
+        self.panel_figure = plt.Figure(figsize=(10,4))
         self.axes = self.panel_figure.add_subplot(111)
         self.panel_canvas = FigureCanvas(self, -1, self.panel_figure)
 
@@ -133,8 +135,13 @@ class ewDataAnalysis(wx.Panel):
 
         self.st_mean_abs = wx.StaticText(sbSizer1.GetStaticBox(), wx.ID_ANY, u"Signal Mean Absolute Value",
                                          wx.DefaultPosition, wx.DefaultSize, 0)
+        self.log_detect = wx.StaticText(sbSizer1.GetStaticBox(), wx.ID_ANY, u"Log Detector",
+                                         wx.DefaultPosition, wx.DefaultSize, 0)
         self.st_mean_abs.Wrap(-1)
         bSizer21.Add(self.st_mean_abs, 0, wx.ALL, 5)
+
+        self.log_detect.Wrap(-1)
+        bSizer21.Add(self.log_detect, 0, wx.ALL, 5)
 
         self.st_slope_sign = wx.StaticText(sbSizer1.GetStaticBox(), wx.ID_ANY, u"Signal Slope Sign Changes",
                                            wx.DefaultPosition, wx.DefaultSize, 0)
@@ -195,6 +202,10 @@ class ewDataAnalysis(wx.Panel):
         self.btn_clear_plot.Bind(wx.EVT_BUTTON, self.OnClear)
         self.btn_reset.Bind(wx.EVT_BUTTON, self.OnReset)
 
+        #sliders
+        self.start_slide.Bind(wx.EVT_SLIDER, self.OnStartSlideMove)
+        self.end_slide.Bind(wx.EVT_SLIDER, self.OnEndSlideMove)
+
     def UpdateValues(self):
         if(self.loaded_data != None):
             dataframe = self.loaded_data[1]
@@ -214,6 +225,7 @@ class ewDataAnalysis(wx.Panel):
         wave_length = u"Signal Wave Length: {}".format(value_array['wavelength'])
         willson = u"Signal Wilson's Amplitude: {}".format(value_array['willsamplitude'])
         v_order = u"Signal V-Order: {}".format(value_array['v_order'])
+        log_det = u"Signal Log_detector: {}".format(value_array["log_detect"])
 
         self.st_zero_cross.SetLabel(zc)
         self.st_mean_abs.SetLabel(mabs)
@@ -221,6 +233,10 @@ class ewDataAnalysis(wx.Panel):
         self.st_wavelen.SetLabel(wave_length)
         self.st_wilson.SetLabel(willson)
         self.st_vord.SetLabel(v_order)
+        self.log_detect.SetLabel(log_det)
+
+        #just an insurance
+        self.emg_data['time_domain_analysis'] = value_array
 
     def UpdateDataArrays(self, time, data):
         print(">>> here is the size: {}".format(len(self.original_data[0])))
@@ -265,6 +281,7 @@ class ewDataAnalysis(wx.Panel):
     def LoadExistingData(self):
         #wx.FileDialog.SetDirectory(wx.self.emg_data['data_location'])
         print(">>> retrieving loaded data")
+        error_catch = 0
         with wx.FileDialog(self, "Open Existing Data", wildcard="Excel File (*.csv)|*.csv",
                            style=wx.FD_OPEN | wx.FD_FILE_MUST_EXIST) as f_dialog:
             f_dialog.SetDirectory(self.emg_data['home_dir'])
@@ -275,17 +292,28 @@ class ewDataAnalysis(wx.Panel):
             try:
                 data = []
                 time = []
+                rate = None
                 with open(filename) as file:
                     csv_reader = csv.reader(file, delimiter=',')
                     print(">>> print here")
+                    row_index = 0
                     for row in csv_reader:
                         try:
+                            if(row_index == 0):
+                                print(str(row[0]))
+                                if("MeasuredPoint" not in str(row[0])):
+                                    print(">>> invalid data format")
+                                    error_catch = 1
+                                    wx.MessageBox("Invalid Data Format", "Error",
+                                                  wx.OK | wx.ICON_ERROR)
+                                row_index+=1
                             if(row == []):
                                 continue
                             if(isinstance(float(row[0]), float) == True):
                                 data.append(float(row[0]))
                                 time.append(float(row[1]))
-                                rate = float(row[2])
+                                if(rate == None):
+                                    rate = float(row[2])
                         except ValueError:
                             continue
 
@@ -299,63 +327,47 @@ class ewDataAnalysis(wx.Panel):
                 print(">>> an error occurred")
 
             finally:
+                if(error_catch == 1):
+                    return -1
                 if(final_array != None):
                     self.DrawFigure(time, data)
                 else:
                     print(">>> doing nothing")
 
     def PlotWindow(self):
-        if (self.m_textCtrl2.GetValue() == "" or self.m_textCtrl3.GetValue() == ""):
-            print(">>> no time window given")
+        try:
+            time_array = self.original_data[0]
+            print(time_array)
+            len(time_array)
+            start, end = self.start_time, self.end_time
 
-            return -1
-        else:
-            print(">>> here is the size: {}".format(len(self.original_data[0])))
-            print(">>> loaded data: {}".format(self.loaded_data[0]))
-            try:
-                time_begin = float(self.m_textCtrl2.GetValue())
-                time_end = float(self.m_textCtrl3.GetValue())
+            start_index = int(len(time_array)*(start/100.0))
+            end_index = int(len(time_array)*(end/100.0))
 
-                # check the to see if time window is within the given recorded time
-                time_array = self.original_data[0]
-                end_point, start_point = time_array[-1],time_array[0]
+            print(start_index)
+            print(end_index)
 
-                if ((time_end == 0 and time_begin == 0) or (time_end < time_begin)):
-                    dlg = wx.MessageDialog(None, "Invalid time interval", "Error - Invalid Time",
-                                           wx.OK | wx.ICON_WARNING)
-                    if (dlg.ShowModal() == wx.ID_OK):
-                        dlg.Destroy()
-
-                if ((time_begin >= start_point and time_begin < end_point) and (
-                        end_point >= time_end and time_end > start_point)):
-                    # time period good
-
-                    start_index = 0
-                    stop_inedx = time_array.index(time_array[-1])
-                    print(stop_inedx)
-                    for element in time_array:
-                        if (time_begin > element):
-                            start_index = time_array.index(element) - 1
-                        if (element > time_end):
-                            stop_inedx = time_array.index(element) - 1
-                            break
-                    print("i get here")
-                    input_time = time_array[start_index:stop_inedx]
-                    print("i get here")
-                    final_array = self.original_data[1]
-                    input_measurement = final_array[start_index:stop_inedx]
-                    print("i get here")
-                    print(input_time)
-
-                    self.UpdateDataArrays(input_time, input_measurement)
-                    #self.loaded_data[0], self.loaded_data[1] = input_time, input_measurement
-                    #print(">>> here is the size: {}".format(len(self.original_data[0])))
-                    self.DrawFigure(input_time, input_measurement)
-                    #print(">>> here is the size: {}".format(len(self.original_data[0])))
-            except:
-                dlg = wx.MessageDialog(None, "Time Error", "error", wx.OK | wx.ICON_ERROR)
-                if (dlg.ShowModal() == wx.OK):
+            if(end_index < start_index):
+                dlg = wx.MessageDialog(None, "Invalid time interval", "Error - Invalid Time",
+                                       wx.OK | wx.ICON_WARNING)
+                if (dlg.ShowModal() == wx.ID_OK):
                     dlg.Destroy()
+                self.end_slide.SetValue(self.start_time+1)
+                self.end_time = self.start_time+1
+                return -1
+
+            input_measurement = self.original_data[1][start_index:end_index]
+
+            self.loaded_data[0] = self.original_data[0][start_index:end_index]
+            self.loaded_data[1] = self.original_data[1][start_index:end_index]
+
+            input_time = time_array[start_index:end_index]
+            self.DrawFigure(input_time, input_measurement)
+
+        except:
+            dlg = wx.MessageDialog(None, "Time Error", "error", wx.OK | wx.ICON_ERROR)
+            if (dlg.ShowModal() == wx.OK):
+                dlg.Destroy()
 
     def OnClear(self, event):
         #self.panel_canvas.ClearBackground()
@@ -395,4 +407,16 @@ class ewDataAnalysis(wx.Panel):
     def OnSelectClick(self, event):
         event.Skip()
 
+    def OnStartSlideMove(self, event):
+        obj = event.GetEventObject()
+        val = obj.GetValue()
+        self.start_time = int(val)
+        self.PlotWindow()
+        event.Skip()
 
+    def OnEndSlideMove(self, event):
+        obj = event.GetEventObject()
+        val = obj.GetValue()
+        self.end_time = int(val)
+        self.PlotWindow()
+        event.Skip()

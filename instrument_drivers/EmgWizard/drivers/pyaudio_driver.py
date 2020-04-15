@@ -215,6 +215,9 @@ class pyaudio_driver:
             ax.axis((0, len(self.plotdata), -1, 1))
             ax.set_ylim((-1, 1))
             ax.set_yticks([0])
+            ax.set_ylabel("Voltage [mV]")
+            ax.set_xlabel("Time window [ms]")
+            ax.set_title("Signal Recording")
             ax.yaxis.grid(True)
             ax.tick_params(bottom='off', top='off', labelbottom='off',
                            right='off', left='off', labelleft='off')

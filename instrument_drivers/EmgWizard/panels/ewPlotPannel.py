@@ -214,12 +214,16 @@ class SettingsFrame(wx.Frame):
 
 class ewPlotPanel(wx.Panel):
     def __init__(self, parent, emg_wiz_data={}):
-        wx.Panel.__init__(self, parent, id=wx.ID_ANY, pos=wx.DefaultPosition, size=wx.Size(1100, 600),
+        panel1 = wx.Panel.__init__(self, parent, id=wx.ID_ANY, pos=wx.DefaultPosition, size=wx.Size(800, 600),
                           style=wx.TAB_TRAVERSAL)
-
+        self.Viewport = wx.Panel(self, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, wx.NO_BORDER)
+        self.Scrollbar = wx.ScrollBar(self, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, wx.SB_VERTICAL)
+        #self.ctrl = MyCtrl(self, -1)
+        self.loaded_data = None
         #emg wizard globals
 
         self.emg_data = emg_wiz_data
+        self.csv_process = csv_process.CSVPreprocess(None, self.emg_data)
         if(emg_wiz_data == {}):
             raise Exception("there was an error getting data")
 
@@ -254,6 +258,7 @@ class ewPlotPanel(wx.Panel):
         }
 
         #existing_data
+        sizer = wx.BoxSizer(wx.HORIZONTAL)
 
         bsMainSizer = wx.BoxSizer(wx.VERTICAL)
 
@@ -261,40 +266,47 @@ class ewPlotPanel(wx.Panel):
 
         bs_Left = wx.BoxSizer(wx.VERTICAL)
 
-        bs_btns = wx.BoxSizer(wx.HORIZONTAL)
+        bs_btns = wx.BoxSizer(wx.VERTICAL)
+        bs_btns_top = wx.BoxSizer(wx.HORIZONTAL)
+        bs_btns_bot = wx.BoxSizer(wx.HORIZONTAL)
 
         self.bBeginRecording = wx.Button(self, wx.ID_ANY, u"Begin Recording", wx.DefaultPosition, wx.DefaultSize, 0)
-        bs_btns.Add(self.bBeginRecording, 0, wx.ALL, 5)
+        bs_btns_top.Add(self.bBeginRecording, 0, wx.ALL, 5)
 
         self.btn_show_stats = wx.Button(self, wx.ID_ANY, u"Compute Recorded Sats", wx.DefaultPosition, wx.DefaultSize,
                                         0)
-        bs_btns.Add(self.btn_show_stats, 0, wx.ALL, 5)
+        bs_btns_top.Add(self.btn_show_stats, 0, wx.ALL, 5)
 
         self.btn_settings = wx.Button(self, wx.ID_ANY, u"Settings", wx.DefaultPosition, wx.DefaultSize, 0)
-        bs_btns.Add(self.btn_settings, 0, wx.ALL, 5)
+        bs_btns_top.Add(self.btn_settings, 0, wx.ALL, 5)
 
         self.btn_load_data = wx.Button(self, wx.ID_ANY, u"Open Recording", wx.DefaultPosition, wx.DefaultSize, 0)
-        bs_btns.Add(self.btn_load_data, 0, wx.ALL, 5)
+        bs_btns_bot.Add(self.btn_load_data, 0, wx.ALL, 5)
 
         self.btn_plot_existng = wx.Button(self, wx.ID_ANY, u"Plot Existing Data", wx.DefaultPosition, wx.DefaultSize,
                                            0)
-        bs_btns.Add(self.btn_plot_existng, 0, wx.ALL, 5)
-
-        bs_Left.Add(bs_btns, 1, wx.EXPAND, 5)
+        bs_btns_bot.Add(self.btn_plot_existng, 0, wx.ALL, 5)
 
         bs_figure = wx.BoxSizer(wx.VERTICAL)
-        #place code here for in panel plot
-        self.panel_figure = plt.Figure()
+        # place code here for in panel plot
+        self.panel_figure = plt.Figure(figsize=(5,5))
         self.axes = self.panel_figure.add_subplot(111)
         self.panel_canvas = FigureCanvas(self, -1, self.panel_figure)
 
-        #add the figure to the sizer
-        bs_figure.Add(self.panel_canvas, 1, wx.LEFT|wx.TOP|wx.GROW)
+        # add the figure to the sizer
+        bs_figure.Add(self.panel_canvas, 1, wx.LEFT | wx.TOP | wx.GROW)
         self.axes.set_xlabel("Time [s]")
         self.axes.set_ylabel("Voltage [mV]")
         self.axes.set_title("Recorded Data")
 
-        bs_Left.Add(bs_figure, 1, wx.EXPAND, 5)
+        bs_btns.Add(bs_btns_top, 1, wx.EXPAND,5)
+        bs_btns.Add(bs_btns_bot, 1, wx.EXPAND, 5)
+        bs_btns.Add(bs_figure, 1, wx.EXPAND, 5)
+
+        bs_Left.Add(bs_btns, 1, wx.EXPAND, 5)
+
+
+        #bs_Left.Add(bs_figure, 1, wx.EXPAND, 5)
 
         bsTopHorizontal.Add(bs_Left, 1, wx.EXPAND, 5)
 
@@ -385,9 +397,17 @@ class ewPlotPanel(wx.Panel):
 
         self._init_ctrls()
         self._init_flags()
-
-        self.SetSizer(bsMainSizer)
+        sizer.Add(bsMainSizer, 1, wx.EXPAND, 0)
+        sizer.Add(self.Scrollbar, 0, wx.EXPAND, 0)
+        self.SetSizer(sizer)
         self.Layout()
+        sizer.Fit(self)
+
+        self.Scrollbar.SetScrollbar(0,0,0,0)
+
+
+
+
 
     def _init_drivers(self):
         self.data_process = csv_process.CSVPreprocess(None, self.emg_data)
@@ -446,6 +466,7 @@ class ewPlotPanel(wx.Panel):
         self.btn_show_stats.Bind(wx.EVT_BUTTON, self.OnUpdateValue)
         self.btn_load_data.Bind(wx.EVT_BUTTON, self.OnLoadExisting)
         self.btn_plot_existng.Bind(wx.EVT_BUTTON, self.OnPlotExisting)
+        self.btn_save_stats.Bind(wx.EVT_BUTTON, self.OnSaveStats)
         pass
 
     def __del__(self):
@@ -561,7 +582,7 @@ class ewPlotPanel(wx.Panel):
         print(">>> save successful")
 
         plt.clf()
-        fig = plt.figure(figsize=(6,6), tight_layout=True)
+        fig = plt.figure(figsize=(6,10), tight_layout=True)
         grid = plt.GridSpec
         ax1 = fig.add_subplot(2,1,1)
         counts, bins, patches = ax1.hist(d_hold,30)

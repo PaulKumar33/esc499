@@ -72,6 +72,7 @@ class CSVPreprocess:
                     writer.writerow(dict_in)
         except IOError:
             print("IOerror")
+            return -1
         return 1
 
     def SendCSVtoList(self, type_return = 'default'):

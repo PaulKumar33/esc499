@@ -27,22 +27,25 @@ class Arduino_Driver:
         y = list()
         i = 0
         count = 0
-        while(True):
-            if(self.serial.readline().decode() == ""):
-                print("waiting...")
-                if(count > 50):
-                    print("there was an issue recording the data")
-                    raise Exception("there was an issue recording the data")
-                time.sleep(1)
-                count += 1
-                continue
-            y.append(self.serial.readline().decode())
-            print(y[i])
-            x.append(i)
-            plt.scatter(i, float(y[i]))
-            i+=1
-            plt.show()
-            plt.pause(0.0001)
+        tok = 0
+        tik = time.time()
+
+        while(tok < 10):
+            data = self.serial.readline()[:-2]
+            try:
+                tok = time.time() - tik
+
+                decoded_bytes = float(data[0:len(data) - 2].decode("utf-8"))
+                y.append(decoded_bytes)
+                x.append(tok)
+                print(decoded_bytes)
+
+            except:
+                print("big cock")
+            # the last bit gets rid of the new-line chars
+
+        #plt.plot(x, y)
+        return x, y
 
 class FTDI_Driver:
     def __init__(self):
@@ -54,5 +57,11 @@ class RasberryPi_Driver:
 
 
 if __name__ == "__main__":
-    ar = Arduino_Driver("COM3", 115200)
-    ar.dynamic_plt()
+    ar = Arduino_Driver("COM5", 115200)
+    x, y = ar.dynamic_plt()
+
+    print(len(x))
+    print(len(y))
+
+    plt.plot(x[0:1000], y[0:1000])
+    plt.show()
